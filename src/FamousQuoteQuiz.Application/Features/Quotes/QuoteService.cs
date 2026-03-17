@@ -82,7 +82,14 @@ public sealed class QuoteService : IQuoteService
             query = query.Where(x => x.IsActive == request.IsActive.Value);
         }
 
-        query = query.OrderBy(x => x.AuthorName).ThenBy(x => x.Id);
+        var desc = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+        query = request.SortBy.Trim().ToLowerInvariant() switch
+        {
+            "text" => desc ? query.OrderByDescending(x => x.Text).ThenByDescending(x => x.Id) : query.OrderBy(x => x.Text).ThenBy(x => x.Id),
+            "createdatutc" => desc ? query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id) : query.OrderBy(x => x.CreatedAtUtc).ThenBy(x => x.Id),
+            "status" => desc ? query.OrderByDescending(x => x.IsActive).ThenByDescending(x => x.Id) : query.OrderBy(x => x.IsActive).ThenBy(x => x.Id),
+            _ => desc ? query.OrderByDescending(x => x.AuthorName).ThenByDescending(x => x.Id) : query.OrderBy(x => x.AuthorName).ThenBy(x => x.Id)
+        };
 
         var totalCount = await query.CountAsync(cancellationToken);
 

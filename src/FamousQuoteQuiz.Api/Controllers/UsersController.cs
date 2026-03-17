@@ -42,6 +42,13 @@ public sealed class UsersController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{id:int}/enable")]
+    public async Task<IActionResult> EnableUser(int id, CancellationToken cancellationToken)
+    {
+        await _userService.EnableAsync(id, cancellationToken);
+        return NoContent();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
     {

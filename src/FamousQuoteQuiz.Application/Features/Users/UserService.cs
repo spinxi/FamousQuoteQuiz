@@ -64,6 +64,16 @@ public sealed class UserService : IUserService
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task EnableAsync(int id, CancellationToken cancellationToken)
+    {
+        var entity = await _dbContext.Users
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{id}' was not found.");
+
+        entity.IsDisabled = false;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task DeleteAsync(int id, CancellationToken cancellationToken)
     {
         var entity = await _dbContext.Users
@@ -101,7 +111,14 @@ public sealed class UserService : IUserService
             query = query.Where(x => x.IsDisabled == request.IsDisabled.Value);
         }
 
-        query = query.OrderBy(x => x.DisplayName).ThenBy(x => x.Id);
+        var desc = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+        query = request.SortBy.Trim().ToLowerInvariant() switch
+        {
+            "username" => desc ? query.OrderByDescending(x => x.UserName).ThenByDescending(x => x.Id) : query.OrderBy(x => x.UserName).ThenBy(x => x.Id),
+            "createdatutc" => desc ? query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id) : query.OrderBy(x => x.CreatedAtUtc).ThenBy(x => x.Id),
+            "status" => desc ? query.OrderByDescending(x => x.IsDisabled).ThenByDescending(x => x.Id) : query.OrderBy(x => x.IsDisabled).ThenBy(x => x.Id),
+            _ => desc ? query.OrderByDescending(x => x.DisplayName).ThenByDescending(x => x.Id) : query.OrderBy(x => x.DisplayName).ThenBy(x => x.Id)
+        };
 
         var totalCount = await query.CountAsync(cancellationToken);
 
