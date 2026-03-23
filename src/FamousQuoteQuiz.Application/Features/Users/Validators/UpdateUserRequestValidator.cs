@@ -9,5 +9,6 @@ public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserReq
     {
         RuleFor(x => x.DisplayName).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
+        RuleFor(x => x.Password).MinimumLength(6).When(x => !string.IsNullOrWhiteSpace(x.Password));
     }
 }

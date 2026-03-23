@@ -1,11 +1,14 @@
 using System.Text.Json.Serialization;
+using System.Text;
 using FamousQuoteQuiz.Api.Middleware;
 using FamousQuoteQuiz.Application;
 using FamousQuoteQuiz.Infrastructure;
 using FamousQuoteQuiz.Infrastructure.Persistence;
 using FamousQuoteQuiz.Infrastructure.Persistence.Seed;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +25,29 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
+
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt secret is not configured.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "FamousQuoteQuiz";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "FamousQuoteQuiz.Frontend";
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = signingKey,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -47,6 +73,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

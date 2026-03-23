@@ -35,7 +35,7 @@ public sealed class QuizServiceTests
 
         var service = new QuizService(dbContext, new TestDateTimeProvider(FixedUtcNow));
 
-        var response = await service.StartSessionAsync(new StartGameSessionRequest
+        var response = await service.StartSessionAsync(user.Id, new StartGameSessionRequest
         {
             UserId = user.Id,
             Mode = QuizMode.MultipleChoice
@@ -69,6 +69,7 @@ public sealed class QuizServiceTests
         var service = new QuizService(dbContext, new TestDateTimeProvider(FixedUtcNow));
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.StartSessionAsync(
+            user.Id,
             new StartGameSessionRequest
             {
                 UserId = user.Id,
@@ -115,7 +116,7 @@ public sealed class QuizServiceTests
 
         var service = new QuizService(dbContext, new TestDateTimeProvider(FixedUtcNow));
 
-        var response = await service.SubmitAnswerAsync(new SubmitAnswerRequest
+        var response = await service.SubmitAnswerAsync(user.Id, new SubmitAnswerRequest
         {
             SessionId = session.Id,
             QuoteId = quote.Id,
@@ -177,6 +178,7 @@ public sealed class QuizServiceTests
         var service = new QuizService(dbContext, new TestDateTimeProvider(FixedUtcNow));
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetNextQuestionAsync(
+            user.Id,
             session.Id,
             CancellationToken.None));
 

@@ -1,12 +1,14 @@
 using FamousQuoteQuiz.Application.Common.Models;
 using FamousQuoteQuiz.Application.Features.Achievements;
 using FamousQuoteQuiz.Application.Features.Achievements.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FamousQuoteQuiz.Api.Controllers;
 
 [ApiController]
 [Route("api/achievements")]
+[Authorize(Roles = "Admin")]
 public sealed class AchievementsController : ControllerBase
 {
     private readonly IQuestionAttemptService _questionAttemptService;

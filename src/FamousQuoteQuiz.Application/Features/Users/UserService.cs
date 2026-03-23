@@ -9,10 +9,12 @@ namespace FamousQuoteQuiz.Application.Features.Users;
 public sealed class UserService : IUserService
 {
     private readonly IAppDbContext _dbContext;
+    private readonly IPasswordService _passwordService;
 
-    public UserService(IAppDbContext dbContext)
+    public UserService(IAppDbContext dbContext, IPasswordService passwordService)
     {
         _dbContext = dbContext;
+        _passwordService = passwordService;
     }
 
     public async Task<UserResponse> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken)
@@ -30,8 +32,10 @@ public sealed class UserService : IUserService
         var entity = new User
         {
             UserName = normalizedUserName,
+            PasswordHash = _passwordService.HashPassword(request.Password),
             DisplayName = request.DisplayName.Trim(),
-            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim()
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            Role = request.Role
         };
 
         _dbContext.Users.Add(entity);
@@ -48,6 +52,12 @@ public sealed class UserService : IUserService
 
         entity.DisplayName = request.DisplayName.Trim();
         entity.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        entity.Role = request.Role;
+
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            entity.PasswordHash = _passwordService.HashPassword(request.Password);
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -131,6 +141,7 @@ public sealed class UserService : IUserService
                 UserName = x.UserName,
                 DisplayName = x.DisplayName,
                 Email = x.Email,
+                Role = x.Role,
                 IsDisabled = x.IsDisabled,
                 CreatedAtUtc = x.CreatedAtUtc
             })
@@ -151,6 +162,7 @@ public sealed class UserService : IUserService
         UserName = entity.UserName,
         DisplayName = entity.DisplayName,
         Email = entity.Email,
+        Role = entity.Role,
         IsDisabled = entity.IsDisabled,
         CreatedAtUtc = entity.CreatedAtUtc
     };

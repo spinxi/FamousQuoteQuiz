@@ -17,6 +17,8 @@ public static class DependencyInjection
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+        services.AddScoped<IPasswordService, PasswordService>();
+        services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
 
         return services;

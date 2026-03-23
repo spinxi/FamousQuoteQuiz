@@ -19,11 +19,11 @@ public sealed class QuizService : IQuizService
         _dateTimeProvider = dateTimeProvider;
     }
 
-    public async Task<GameSessionResponse> StartSessionAsync(StartGameSessionRequest request, CancellationToken cancellationToken)
+    public async Task<GameSessionResponse> StartSessionAsync(int currentUserId, StartGameSessionRequest request, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == request.UserId && !x.IsDeleted, cancellationToken)
-            ?? throw new KeyNotFoundException($"User with id '{request.UserId}' was not found.");
+            .FirstOrDefaultAsync(x => x.Id == currentUserId && !x.IsDeleted, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{currentUserId}' was not found.");
 
         if (user.IsDisabled)
         {
@@ -31,7 +31,7 @@ public sealed class QuizService : IQuizService
         }
 
         var activeSessions = await _dbContext.GameSessions
-            .Where(x => x.UserId == request.UserId && x.IsActive)
+            .Where(x => x.UserId == currentUserId && x.IsActive)
             .ToListAsync(cancellationToken);
 
         foreach (var activeSession in activeSessions)
@@ -42,7 +42,7 @@ public sealed class QuizService : IQuizService
 
         var entity = new GameSession
         {
-            UserId = request.UserId,
+            UserId = currentUserId,
             Mode = request.Mode,
             StartedAtUtc = _dateTimeProvider.UtcNow,
             IsActive = true
@@ -61,13 +61,18 @@ public sealed class QuizService : IQuizService
         };
     }
 
-    public async Task<QuizQuestionResponse> GetNextQuestionAsync(int sessionId, CancellationToken cancellationToken)
+    public async Task<QuizQuestionResponse> GetNextQuestionAsync(int currentUserId, int sessionId, CancellationToken cancellationToken)
     {
         var session = await _dbContext.GameSessions
             .Include(x => x.User)
             .Include(x => x.QuestionAttempts)
             .FirstOrDefaultAsync(x => x.Id == sessionId, cancellationToken)
             ?? throw new KeyNotFoundException($"Session with id '{sessionId}' was not found.");
+
+        if (session.UserId != currentUserId)
+        {
+            throw new InvalidOperationException("You are not allowed to access this session.");
+        }
 
         if (!session.IsActive)
         {
@@ -123,12 +128,17 @@ public sealed class QuizService : IQuizService
         };
     }
 
-    public async Task<SubmitAnswerResponse> SubmitAnswerAsync(SubmitAnswerRequest request, CancellationToken cancellationToken)
+    public async Task<SubmitAnswerResponse> SubmitAnswerAsync(int currentUserId, SubmitAnswerRequest request, CancellationToken cancellationToken)
     {
         var session = await _dbContext.GameSessions
             .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.Id == request.SessionId, cancellationToken)
             ?? throw new KeyNotFoundException($"Session with id '{request.SessionId}' was not found.");
+
+        if (session.UserId != currentUserId)
+        {
+            throw new InvalidOperationException("You are not allowed to access this session.");
+        }
 
         if (!session.IsActive)
         {

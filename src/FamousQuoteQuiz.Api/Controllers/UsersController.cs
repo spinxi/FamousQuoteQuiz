@@ -1,12 +1,14 @@
 using FamousQuoteQuiz.Application.Common.Models;
 using FamousQuoteQuiz.Application.Features.Users;
 using FamousQuoteQuiz.Application.Features.Users.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FamousQuoteQuiz.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
+[Authorize(Roles = "Admin")]
 public sealed class UsersController : ControllerBase
 {
     private readonly IUserService _userService;

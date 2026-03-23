@@ -1,4 +1,5 @@
 using FamousQuoteQuiz.Application.Features.Users;
+using FamousQuoteQuiz.Infrastructure.Services;
 using FamousQuoteQuiz.Domain.Entities;
 using FamousQuoteQuiz.Domain.Enums;
 using Xunit;
@@ -28,7 +29,7 @@ public sealed class UserServiceTests
         });
         await dbContext.SaveChangesAsync();
 
-        var service = new UserService(dbContext);
+        var service = new UserService(dbContext, new PasswordService());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DeleteAsync(
             user.Id,

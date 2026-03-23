@@ -1,4 +1,5 @@
 using FamousQuoteQuiz.Application.Features.Achievements;
+using FamousQuoteQuiz.Application.Features.Auth;
 using FamousQuoteQuiz.Application.Features.Quotes;
 using FamousQuoteQuiz.Application.Features.Quiz;
 using FamousQuoteQuiz.Application.Features.Users;
@@ -11,6 +12,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IQuoteService, QuoteService>();
         services.AddScoped<IQuizService, QuizService>();
